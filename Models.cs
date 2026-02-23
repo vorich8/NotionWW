@@ -474,6 +474,7 @@ namespace TeamManagerBot.Models
         public string? CardNumber { get; set; }  // Последние 4 цифры или полный номер
         public string? BankName { get; set; }
         public string? CardType { get; set; } // debit, credit
+        public string? CardStatus { get; set; } // рабочая, лок, 115, 161
         public bool IsPrimary { get; set; }
         public string? Notes { get; set; }
     }

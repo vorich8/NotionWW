@@ -12970,7 +12970,7 @@ namespace TeamManagerBot.Handlers
                 _userStates[userId] = state;
 
                 await _menuManager.SendTemporaryMessageAsync(chatId,
-                    "📝 ШАГ 2/3\n\nВведите название банка (например: Тинькофф, Сбер):", cancellationToken);
+                    "📝 ШАГ 2/4\n\nВведите название банка (например: Тинькофф, Сбер):", cancellationToken);
                 return;
             }
 
@@ -12981,15 +12981,35 @@ namespace TeamManagerBot.Handlers
                 _userStates[userId] = state;
 
                 await _menuManager.SendTemporaryMessageAsync(chatId,
-                    "📝 ШАГ 3/3\n\nВведите тип карты: debit или credit", cancellationToken);
+                    "📝 ШАГ 3/4\n\nВведите тип карты: debit или credit", cancellationToken);
                 return;
             }
 
-            var cardType = text.Trim().ToLowerInvariant();
-            if (cardType != "debit" && cardType != "credit")
+            if (step == 3)
+            {
+                var cardTypeStep3 = text.Trim().ToLowerInvariant();
+                if (cardTypeStep3 != "debit" && cardTypeStep3 != "credit")
+                {
+                    await _menuManager.SendTemporaryMessageAsync(chatId,
+                        "❌ Неверный тип карты. Введите debit или credit", cancellationToken);
+                    return;
+                }
+
+                state.Data["cardType"] = cardTypeStep3;
+                state.Step = 4;
+                _userStates[userId] = state;
+
+                await _menuManager.SendTemporaryMessageAsync(chatId,
+                    "📝 ШАГ 4/4\n\nВведите статус карты (рабочая/лок/115/161):", cancellationToken);
+                return;
+            }
+
+            var cardStatus = text.Trim().ToLowerInvariant();
+            var validStatuses = new[] { "рабочая", "лок", "115", "161" };
+            if (!validStatuses.Contains(cardStatus))
             {
                 await _menuManager.SendTemporaryMessageAsync(chatId,
-                    "❌ Неверный тип карты. Введите debit или credit", cancellationToken);
+                    "❌ Неверный статус. Введите: рабочая, лок, 115 или 161", cancellationToken);
                 return;
             }
 
@@ -12997,7 +13017,8 @@ namespace TeamManagerBot.Handlers
             {
                 CardNumber = state.Data["cardNumber"]?.ToString(),
                 BankName = state.Data["bankName"]?.ToString(),
-                CardType = cardType,
+                CardType = state.Data["cardType"]?.ToString(),
+                CardStatus = cardStatus,
                 IsPrimary = false
             };
 
@@ -13021,13 +13042,6 @@ namespace TeamManagerBot.Handlers
             if (contact == null)
             {
                 await _menuManager.SendTemporaryMessageAsync(chatId, "❌ Контакт не найден", cancellationToken, 3);
-                return;
-            }
-
-            if (IsContactCardBlocked(contact.CardStatus))
-            {
-                await _menuManager.SendTemporaryMessageAsync(chatId,
-                    "❌ Для контактов со статусом лок/115/161 операции с картами заблокированы", cancellationToken, 4);
                 return;
             }
 
