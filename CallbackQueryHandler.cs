@@ -12937,13 +12937,6 @@ namespace TeamManagerBot.Handlers
                 return;
             }
 
-            if (IsContactCardBlocked(contact.CardStatus))
-            {
-                await _menuManager.SendTemporaryMessageAsync(chatId,
-                    "❌ Для контактов со статусом лок/115/161 операции с картами заблокированы", cancellationToken, 4);
-                return;
-            }
-
             _userStates[userId] = new UserState
             {
                 CurrentAction = "db_add_card_number",
@@ -12964,14 +12957,6 @@ namespace TeamManagerBot.Handlers
             if (contact == null)
             {
                 await _menuManager.SendTemporaryMessageAsync(chatId, "❌ Контакт не найден", cancellationToken, 3);
-                _userStates.Remove(userId);
-                return;
-            }
-
-            if (IsContactCardBlocked(contact.CardStatus))
-            {
-                await _menuManager.SendTemporaryMessageAsync(chatId,
-                    "❌ Для контактов со статусом лок/115/161 операции с картами заблокированы", cancellationToken, 4);
                 _userStates.Remove(userId);
                 return;
             }
