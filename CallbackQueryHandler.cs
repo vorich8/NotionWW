@@ -13139,7 +13139,12 @@ namespace TeamManagerBot.Handlers
         // ===== ПОКАЗ КОНТАКТОВ ПО СТАТУСУ =====
         private async Task ShowContactsByStatusAsync(long chatId, string status, CancellationToken cancellationToken)
         {
-            var contacts = await _contactService.GetContactsByStatusAsync(status);
+            var allContacts = await _contactService.GetAllContactsAsync();
+            var contacts = status switch
+            {
+                "115" => allContacts.Where(c => c.CardStatus == "115" || c.CardStatus == "161" || c.BankCards.Any(b => b.CardStatus == "115" || b.CardStatus == "161")).ToList(),
+                _ => allContacts.Where(c => c.CardStatus == status || c.BankCards.Any(b => b.CardStatus == status)).ToList()
+            };
 
             var statusEmoji = status switch
             {
@@ -13150,7 +13155,8 @@ namespace TeamManagerBot.Handlers
                 _ => "⚪"
             };
 
-            var text = $"{statusEmoji} КОНТАКТЫ СО СТАТУСОМ: {status}\n\n";
+            var statusTitle = status == "115" ? "115/161" : status;
+            var text = $"{statusEmoji} КОНТАКТЫ СО СТАТУСОМ: {statusTitle}\n\n";
 
             if (!contacts.Any())
             {
@@ -14091,28 +14097,23 @@ namespace TeamManagerBot.Handlers
                        "2️⃣ ФИО\n" +
                        "3️⃣ Телефон\n" +
                        "4️⃣ Дата рождения\n" +
-                       "5️⃣ Номер карты\n" +
-                       "6️⃣ CVV\n" +
-                       "7️⃣ Срок карты\n" +
-                       "8️⃣ Кодовое слово\n" +
-                       "9️⃣ Наш номер на контакте\n" +
-                       "🔟 Пароль от банка\n" +
-                       "1️⃣1️⃣ Пин-код\n" +
-                       "1️⃣2️⃣ Наша почта\n" +
-                       "1️⃣3️⃣ Паспортные данные\n" +
-                       "1️⃣4️⃣ ИНН\n" +
-                       "1️⃣5️⃣ Статус карты\n" +
-                       "1️⃣6️⃣ Заметки\n\n" +
-                       "Введите номер поля (1-16) или 0 для выхода:";
+                       "5️⃣ Наш номер на контакте\n" +
+                       "6️⃣ Пароль от банка\n" +
+                       "7️⃣ Пин-код\n" +
+                       "8️⃣ Наша почта\n" +
+                       "9️⃣ Паспортные данные\n" +
+                       "🔟 ИНН\n" +
+                       "1️⃣1️⃣ Заметки\n\n" +
+                       "Введите номер поля (1-11) или 0 для выхода:";
 
             await _menuManager.SendTemporaryMessageAsync(chatId, text, cancellationToken);
         }
 
         private async Task HandleEditContactSelectFieldAsync(long chatId, long userId, string text, UserState state, CancellationToken cancellationToken)
         {
-            if (!int.TryParse(text, out int field) || field < 0 || field > 16)
+            if (!int.TryParse(text, out int field) || field < 0 || field > 11)
             {
-                await _menuManager.SendTemporaryMessageAsync(chatId, "❌ Введите число от 0 до 16", cancellationToken);
+                await _menuManager.SendTemporaryMessageAsync(chatId, "❌ Введите число от 0 до 11", cancellationToken);
                 return;
             }
 
@@ -14134,6 +14135,18 @@ namespace TeamManagerBot.Handlers
                 _userStates.Remove(userId);
                 return;
             }
+
+            field = field switch
+            {
+                5 => 9,
+                6 => 10,
+                7 => 11,
+                8 => 12,
+                9 => 13,
+                10 => 14,
+                11 => 16,
+                _ => field
+            };
 
             var fieldName = field switch
             {
@@ -14378,17 +14391,8 @@ namespace TeamManagerBot.Handlers
                        $"│ 🎭 Ник: {contact.Nickname ?? "-"}\n" +
                        $"│ 📞 Телефон: {contact.PhoneNumber ?? "-"}\n" +
                        $"│ 🎂 Дата рождения: {contact.BirthDate?.ToString("dd.MM.yyyy") ?? "-"}\n" +
-                       $"│ {statusEmoji} Статус: {contact.CardStatus ?? "-"}\n" +
                        $"│ 🏷️ Теги: {contact.Tags ?? "-"}\n" +
                        $"│ 📝 Тип: {contact.ContactType ?? "-"}\n" +
-                       $"└─────────────────────────────────\n\n" +
-
-                       $"💳 ДАННЫЕ КАРТЫ:\n" +
-                       $"┌─────────────────────────────────\n" +
-                       $"│ Номер: {contact.CardNumber ?? "-"}\n" +
-                       $"│ CVV: {contact.CVV ?? "-"}\n" +
-                       $"│ Срок: {contact.CardExpiry ?? "-"}\n" +
-                       $"│ Код слово: {contact.SecurityWord ?? "-"}\n" +
                        $"└─────────────────────────────────\n\n" +
 
                        $"🔐 НАШИ ДАННЫЕ:\n" +
