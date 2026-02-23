@@ -206,9 +206,10 @@ namespace TeamManagerBot.Services
 
         public async Task<List<TeamContact>> GetContactsByStatusAsync(string status)
         {
-            return await _context.Contacts
-                .Where(c => c.CardStatus == status)
-                .ToListAsync();
+            var contacts = await _context.Contacts.ToListAsync();
+            return status == "115"
+                ? contacts.Where(c => c.CardStatus == "115" || c.CardStatus == "161" || c.BankCards.Any(b => b.CardStatus == "115" || b.CardStatus == "161")).ToList()
+                : contacts.Where(c => c.CardStatus == status || c.BankCards.Any(b => b.CardStatus == status)).ToList();
         }
 
         public async Task<List<TeamContact>> GetContactsByTypeAsync(string contactType)
@@ -220,9 +221,8 @@ namespace TeamManagerBot.Services
 
         public async Task<List<TeamContact>> GetContactsWithCardsAsync()
         {
-            return await _context.Contacts
-                .Where(c => !string.IsNullOrEmpty(c.BankCardsJson) && c.BankCardsJson != "[]")
-                .ToListAsync();
+            var contacts = await _context.Contacts.ToListAsync();
+            return contacts.Where(c => c.BankCards.Any()).ToList();
         }
 
         public async Task<List<TeamContact>> GetContactsWithCryptoAsync()
@@ -238,14 +238,30 @@ namespace TeamManagerBot.Services
         {
             var contacts = await _context.Contacts.ToListAsync();
 
+            var statuses = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
+            foreach (var contact in contacts)
+            {
+                if (!string.IsNullOrWhiteSpace(contact.CardStatus))
+                {
+                    var key = contact.CardStatus!;
+                    statuses[key] = statuses.TryGetValue(key, out var count) ? count + 1 : 1;
+                }
+
+                foreach (var card in contact.BankCards)
+                {
+                    if (string.IsNullOrWhiteSpace(card.CardStatus))
+                        continue;
+
+                    var key = card.CardStatus!;
+                    statuses[key] = statuses.TryGetValue(key, out var count) ? count + 1 : 1;
+                }
+            }
+
             return new ContactStatistics
             {
                 TotalContacts = contacts.Count,
-                ContactsByStatus = contacts
-                    .Where(c => !string.IsNullOrEmpty(c.CardStatus))
-                    .GroupBy(c => c.CardStatus!)
-                    .ToDictionary(g => g.Key, g => g.Count()),
-                ContactsWithCards = contacts.Count(c => !string.IsNullOrEmpty(c.BankCardsJson) && c.BankCardsJson != "[]"),
+                ContactsByStatus = statuses,
+                ContactsWithCards = contacts.Count(c => c.BankCards.Any()),
                 ContactsWithPassport = contacts.Count(c => !string.IsNullOrEmpty(c.PassportNumber))
             };
         }
