@@ -13364,6 +13364,10 @@ namespace TeamManagerBot.Handlers
 
             var text = $"💳 КАРТЫ КОНТАКТА: {name}\n\n";
 
+            if (isBlockedContact)
+                text += "🔒 Для статусов лок/115/161 изменение карт недоступно.\n\n";
+
+
             if (!cards.Any())
             {
                 text += "У контакта нет добавленных карт";
@@ -13387,8 +13391,8 @@ namespace TeamManagerBot.Handlers
         new()
         {
             InlineKeyboardButton.WithCallbackData(
-                isBlockedContact ? "🔒 КАРТЫ ЗАБЛОКИРОВАНЫ" : "➕ ДОБАВИТЬ КАРТУ",
-                isBlockedContact ? $"db_contact_cards_{contactId}" : $"db_contact_add_card_{contactId}")
+                isBlockedContact ? "🔒 ДОБАВИТЬ КАРТУ" : "➕ ДОБАВИТЬ КАРТУ",
+                $"db_contact_add_card_{contactId}")
         }
     };
 
@@ -13396,22 +13400,26 @@ namespace TeamManagerBot.Handlers
             {
                 foreach (var card in cards.Take(3))
                 {
-                    if (!card.IsPrimary && !isBlockedContact)
+                    if (!card.IsPrimary)
                     {
                         buttons.Add(new List<InlineKeyboardButton>
                 {
-                    InlineKeyboardButton.WithCallbackData($"⭐ Сделать основной •••• {card.CardNumber}",
+                    InlineKeyboardButton.WithCallbackData(
+                        isBlockedContact
+                            ? $"🔒 Сделать основной •••• {card.CardNumber}"
+                            : $"⭐ Сделать основной •••• {card.CardNumber}",
                         $"db_contact_card_primary_{contactId}_{card.CardNumber}")
                 });
                     }
-                    if (!isBlockedContact)
-                    {
-                        buttons.Add(new List<InlineKeyboardButton>
+
+                    buttons.Add(new List<InlineKeyboardButton>
             {
-                InlineKeyboardButton.WithCallbackData($"🗑️ Удалить •••• {card.CardNumber}",
+                InlineKeyboardButton.WithCallbackData(
+                    isBlockedContact
+                        ? $"🔒 Удалить •••• {card.CardNumber}"
+                        : $"🗑️ Удалить •••• {card.CardNumber}",
                     $"db_contact_card_delete_{contactId}_{card.CardNumber}")
             });
-                    }
                 }
             }
 
