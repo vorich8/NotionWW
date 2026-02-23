@@ -8385,7 +8385,7 @@ namespace TeamManagerBot.Handlers
                             };
                             await SendTemporaryMessageAsync(chatId,
                                 "💳 ДОБАВЛЕНИЕ БАНКОВСКОЙ КАРТЫ\n\n" +
-                                "Введите номер карты (последние 4 цифры):", cancellationToken);
+                                "Введите номер карты (целиком):", cancellationToken);
                         }
                         break;
                     }
@@ -8443,7 +8443,7 @@ namespace TeamManagerBot.Handlers
                 case var _ when callbackData.StartsWith("contact_set_primary_bank_"):
                     {
                         var parts = callbackData.Split('_');
-                        if (parts.Length >= 5 && int.TryParse(parts[4], out int contactId))
+                        if (parts.Length >= 6 && int.TryParse(parts[4], out int contactId))
                         {
                             var cardNumber = parts.Length >= 6 ? parts[5] : "";
                             await SetPrimaryBankCardAsync(chatId, contactId, cardNumber, cancellationToken);
@@ -12833,7 +12833,7 @@ namespace TeamManagerBot.Handlers
                     else if (callbackData.StartsWith("db_contact_card_primary_"))
                     {
                         var parts = callbackData.Split('_');
-                        if (parts.Length >= 5 && int.TryParse(parts[4], out int contactId))
+                        if (parts.Length >= 6 && int.TryParse(parts[4], out int contactId))
                         {
                             var cardNumber = string.Join("_", parts.Skip(5));
                             await SetPrimaryBankCardAsync(chatId, userId, contactId, cardNumber, cancellationToken);
@@ -12946,7 +12946,7 @@ namespace TeamManagerBot.Handlers
 
             await _menuManager.SendTemporaryMessageAsync(chatId,
                 $"💳 ДОБАВЛЕНИЕ КАРТЫ ДЛЯ {contact.FullName ?? contact.TelegramUsername}\n\n" +
-                "Введите номер карты (последние 4 цифры):", cancellationToken);
+                "Введите номер карты (целиком):", cancellationToken);
         }
 
         private async Task HandleAddCardNumberAsync(long chatId, long userId, string text, UserState state, CancellationToken cancellationToken)
@@ -12970,37 +12970,70 @@ namespace TeamManagerBot.Handlers
                 _userStates[userId] = state;
 
                 await _menuManager.SendTemporaryMessageAsync(chatId,
-                    "📝 ШАГ 2/4\n\nВведите название банка (например: Тинькофф, Сбер):", cancellationToken);
+                    "📝 ШАГ 2/7\n\nВведите CVV:", cancellationToken);
                 return;
             }
 
             if (step == 2)
             {
-                state.Data["bankName"] = text.Trim();
+                state.Data["cvv"] = text.Trim();
                 state.Step = 3;
                 _userStates[userId] = state;
 
                 await _menuManager.SendTemporaryMessageAsync(chatId,
-                    "📝 ШАГ 3/4\n\nВведите тип карты: debit или credit", cancellationToken);
+                    "📝 ШАГ 3/7\n\nВведите срок действия карты (MM/YY):", cancellationToken);
                 return;
             }
 
             if (step == 3)
             {
-                var cardTypeStep3 = text.Trim().ToLowerInvariant();
-                if (cardTypeStep3 != "debit" && cardTypeStep3 != "credit")
+                state.Data["cardExpiry"] = text.Trim();
+                state.Step = 4;
+                _userStates[userId] = state;
+
+                await _menuManager.SendTemporaryMessageAsync(chatId,
+                    "📝 ШАГ 4/7\n\nВведите кодовое слово:", cancellationToken);
+                return;
+            }
+
+            if (step == 4)
+            {
+                state.Data["securityWord"] = text.Trim();
+                state.Step = 5;
+                _userStates[userId] = state;
+
+                await _menuManager.SendTemporaryMessageAsync(chatId,
+                    "📝 ШАГ 5/7\n\nВведите название банка (например: Тинькофф, Сбер):", cancellationToken);
+                return;
+            }
+
+            if (step == 5)
+            {
+                state.Data["bankName"] = text.Trim();
+                state.Step = 6;
+                _userStates[userId] = state;
+
+                await _menuManager.SendTemporaryMessageAsync(chatId,
+                    "📝 ШАГ 6/7\n\nВведите тип карты: debit или credit", cancellationToken);
+                return;
+            }
+
+            if (step == 6)
+            {
+                var cardTypeStep6 = text.Trim().ToLowerInvariant();
+                if (cardTypeStep6 != "debit" && cardTypeStep6 != "credit")
                 {
                     await _menuManager.SendTemporaryMessageAsync(chatId,
                         "❌ Неверный тип карты. Введите debit или credit", cancellationToken);
                     return;
                 }
 
-                state.Data["cardType"] = cardTypeStep3;
-                state.Step = 4;
+                state.Data["cardType"] = cardTypeStep6;
+                state.Step = 7;
                 _userStates[userId] = state;
 
                 await _menuManager.SendTemporaryMessageAsync(chatId,
-                    "📝 ШАГ 4/4\n\nВведите статус карты (рабочая/лок/115/161):", cancellationToken);
+                    "📝 ШАГ 7/7\n\nВведите статус карты (рабочая/лок/115/161):", cancellationToken);
                 return;
             }
 
@@ -13016,6 +13049,9 @@ namespace TeamManagerBot.Handlers
             var card = new BankCard
             {
                 CardNumber = state.Data["cardNumber"]?.ToString(),
+                CVV = state.Data["cvv"]?.ToString(),
+                CardExpiry = state.Data["cardExpiry"]?.ToString(),
+                SecurityWord = state.Data["securityWord"]?.ToString(),
                 BankName = state.Data["bankName"]?.ToString(),
                 CardType = state.Data["cardType"]?.ToString(),
                 CardStatus = cardStatus,
@@ -13950,10 +13986,7 @@ namespace TeamManagerBot.Handlers
 
                 // ... остальные поля ...
 
-                CardNumber = state.Data.ContainsKey("cardNumber") ? state.Data["cardNumber"]?.ToString() : null,
-                CVV = state.Data.ContainsKey("cvv") ? state.Data["cvv"]?.ToString() : null,
-                CardExpiry = state.Data.ContainsKey("cardExpiry") ? state.Data["cardExpiry"]?.ToString() : null,
-                SecurityWord = state.Data.ContainsKey("securityWord") ? state.Data["securityWord"]?.ToString() : null,
+                // Карты добавляются только через меню "💳 КАРТЫ".
 
                 OurPhoneNumber = state.Data.ContainsKey("ourPhoneNumber") ? state.Data["ourPhoneNumber"]?.ToString() : null,
                 BankPassword = state.Data.ContainsKey("bankPassword") ? state.Data["bankPassword"]?.ToString() : null,
@@ -13968,7 +14001,6 @@ namespace TeamManagerBot.Handlers
                 PassportIssueDate = state.Data.ContainsKey("passportIssueDate") ? (DateTime?)state.Data["passportIssueDate"] : null,
                 INN = state.Data.ContainsKey("inn") ? state.Data["inn"]?.ToString() : null,
 
-                CardStatus = state.Data.ContainsKey("cardStatus") ? state.Data["cardStatus"]?.ToString() : null,
                 Notes = state.Data.ContainsKey("notes") ? state.Data["notes"]?.ToString() : null,
 
                 ContactType = "Дроп",
