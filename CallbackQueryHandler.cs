@@ -12839,15 +12839,6 @@ namespace TeamManagerBot.Handlers
                             await SetPrimaryBankCardAsync(chatId, userId, contactId, cardNumber, cancellationToken);
                         }
                     }
-                    else if (callbackData.StartsWith("db_contact_card_delete_"))
-                    {
-                        var parts = callbackData.Split('_');
-                        if (parts.Length >= 5 && int.TryParse(parts[4], out int contactId))
-                        {
-                            var cardNumber = string.Join("_", parts.Skip(5));
-                            await ShowDeleteCardConfirmationAsync(chatId, contactId, cardNumber, cancellationToken);
-                        }
-                    }
                     else if (callbackData.StartsWith("db_contact_card_delete_confirm_"))
                     {
                         var parts = callbackData.Split('_');
@@ -12855,6 +12846,15 @@ namespace TeamManagerBot.Handlers
                         {
                             var cardNumber = string.Join("_", parts.Skip(6));
                             await DeleteBankCardAsync(chatId, userId, contactId, cardNumber, cancellationToken);
+                        }
+                    }
+                    else if (callbackData.StartsWith("db_contact_card_delete_"))
+                    {
+                        var parts = callbackData.Split('_');
+                        if (parts.Length >= 5 && int.TryParse(parts[4], out int contactId))
+                        {
+                            var cardNumber = string.Join("_", parts.Skip(5));
+                            await ShowDeleteCardConfirmationAsync(chatId, contactId, cardNumber, cancellationToken);
                         }
                     }
                     
