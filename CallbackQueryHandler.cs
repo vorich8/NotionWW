@@ -13328,13 +13328,6 @@ namespace TeamManagerBot.Handlers
                 return;
             }
 
-            if (IsContactCardBlocked(contact.CardStatus))
-            {
-                await _menuManager.SendTemporaryMessageAsync(chatId,
-                    "❌ Для контактов со статусом лок/115/161 операции с картами заблокированы", cancellationToken, 4);
-                return;
-            }
-
             var result = await _contactService.RemoveBankCardAsync(contactId, cardNumber);
 
             if (result)
