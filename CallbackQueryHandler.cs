@@ -12937,6 +12937,13 @@ namespace TeamManagerBot.Handlers
                 return;
             }
 
+            if (IsContactCardBlocked(contact.CardStatus))
+            {
+                await _menuManager.SendTemporaryMessageAsync(chatId,
+                    "❌ Для контактов со статусом лок/115/161 операции с картами заблокированы", cancellationToken, 4);
+                return;
+            }
+
             _userStates[userId] = new UserState
             {
                 CurrentAction = "db_add_card_number",
@@ -12953,9 +12960,59 @@ namespace TeamManagerBot.Handlers
         {
             var contactId = (int)state.Data["contactId"]!;
 
+            var contact = await _contactService.GetContactAsync(contactId);
+            if (contact == null)
+            {
+                await _menuManager.SendTemporaryMessageAsync(chatId, "❌ Контакт не найден", cancellationToken, 3);
+                _userStates.Remove(userId);
+                return;
+            }
+
+            if (IsContactCardBlocked(contact.CardStatus))
+            {
+                await _menuManager.SendTemporaryMessageAsync(chatId,
+                    "❌ Для контактов со статусом лок/115/161 операции с картами заблокированы", cancellationToken, 4);
+                _userStates.Remove(userId);
+                return;
+            }
+
+            var step = state.Step;
+
+            if (step == 1)
+            {
+                state.Data["cardNumber"] = text.Trim();
+                state.Step = 2;
+                _userStates[userId] = state;
+
+                await _menuManager.SendTemporaryMessageAsync(chatId,
+                    "📝 ШАГ 2/3\n\nВведите название банка (например: Тинькофф, Сбер):", cancellationToken);
+                return;
+            }
+
+            if (step == 2)
+            {
+                state.Data["bankName"] = text.Trim();
+                state.Step = 3;
+                _userStates[userId] = state;
+
+                await _menuManager.SendTemporaryMessageAsync(chatId,
+                    "📝 ШАГ 3/3\n\nВведите тип карты: debit или credit", cancellationToken);
+                return;
+            }
+
+            var cardType = text.Trim().ToLowerInvariant();
+            if (cardType != "debit" && cardType != "credit")
+            {
+                await _menuManager.SendTemporaryMessageAsync(chatId,
+                    "❌ Неверный тип карты. Введите debit или credit", cancellationToken);
+                return;
+            }
+
             var card = new BankCard
             {
-                CardNumber = text,
+                CardNumber = state.Data["cardNumber"]?.ToString(),
+                BankName = state.Data["bankName"]?.ToString(),
+                CardType = cardType,
                 IsPrimary = false
             };
 
@@ -12975,6 +13032,20 @@ namespace TeamManagerBot.Handlers
 
         private async Task SetPrimaryBankCardAsync(long chatId, long userId, int contactId, string cardNumber, CancellationToken cancellationToken)
         {
+            var contact = await _contactService.GetContactAsync(contactId);
+            if (contact == null)
+            {
+                await _menuManager.SendTemporaryMessageAsync(chatId, "❌ Контакт не найден", cancellationToken, 3);
+                return;
+            }
+
+            if (IsContactCardBlocked(contact.CardStatus))
+            {
+                await _menuManager.SendTemporaryMessageAsync(chatId,
+                    "❌ Для контактов со статусом лок/115/161 операции с картами заблокированы", cancellationToken, 4);
+                return;
+            }
+
             var result = await _contactService.SetPrimaryBankCardAsync(contactId, cardNumber);
 
             if (result)
@@ -13250,6 +13321,20 @@ namespace TeamManagerBot.Handlers
         // ===== УДАЛЕНИЕ КАРТЫ =====
         private async Task DeleteBankCardAsync(long chatId, long userId, int contactId, string cardNumber, CancellationToken cancellationToken)
         {
+            var contact = await _contactService.GetContactAsync(contactId);
+            if (contact == null)
+            {
+                await _menuManager.SendTemporaryMessageAsync(chatId, "❌ Контакт не найден", cancellationToken, 3);
+                return;
+            }
+
+            if (IsContactCardBlocked(contact.CardStatus))
+            {
+                await _menuManager.SendTemporaryMessageAsync(chatId,
+                    "❌ Для контактов со статусом лок/115/161 операции с картами заблокированы", cancellationToken, 4);
+                return;
+            }
+
             var result = await _contactService.RemoveBankCardAsync(contactId, cardNumber);
 
             if (result)
@@ -13274,6 +13359,7 @@ namespace TeamManagerBot.Handlers
             }
 
             var cards = contact.BankCards;
+            var isBlockedContact = IsContactCardBlocked(contact.CardStatus);
             var name = !string.IsNullOrEmpty(contact.FullName) ? contact.FullName : $"@{contact.TelegramUsername}";
 
             var text = $"💳 КАРТЫ КОНТАКТА: {name}\n\n";
@@ -13298,14 +13384,19 @@ namespace TeamManagerBot.Handlers
 
             var buttons = new List<List<InlineKeyboardButton>>
     {
-        new() { InlineKeyboardButton.WithCallbackData("➕ ДОБАВИТЬ КАРТУ", $"db_contact_add_card_{contactId}") }
+        new()
+        {
+            InlineKeyboardButton.WithCallbackData(
+                isBlockedContact ? "🔒 КАРТЫ ЗАБЛОКИРОВАНЫ" : "➕ ДОБАВИТЬ КАРТУ",
+                isBlockedContact ? $"db_contact_cards_{contactId}" : $"db_contact_add_card_{contactId}")
+        }
     };
 
             if (cards.Any())
             {
                 foreach (var card in cards.Take(3))
                 {
-                    if (!card.IsPrimary)
+                    if (!card.IsPrimary && !isBlockedContact)
                     {
                         buttons.Add(new List<InlineKeyboardButton>
                 {
@@ -13313,11 +13404,14 @@ namespace TeamManagerBot.Handlers
                         $"db_contact_card_primary_{contactId}_{card.CardNumber}")
                 });
                     }
-                    buttons.Add(new List<InlineKeyboardButton>
+                    if (!isBlockedContact)
+                    {
+                        buttons.Add(new List<InlineKeyboardButton>
             {
                 InlineKeyboardButton.WithCallbackData($"🗑️ Удалить •••• {card.CardNumber}",
                     $"db_contact_card_delete_{contactId}_{card.CardNumber}")
             });
+                    }
                 }
             }
 
@@ -13327,6 +13421,11 @@ namespace TeamManagerBot.Handlers
     });
 
             await _menuManager.ShowInlineMenuAsync(chatId, text, new InlineKeyboardMarkup(buttons), $"db_contact_cards_{contactId}", cancellationToken);
+        }
+
+        private static bool IsContactCardBlocked(string? cardStatus)
+        {
+            return cardStatus == "лок" || cardStatus == "115" || cardStatus == "161";
         }
 
         // ===== ДОБАВЛЕНИЕ КОНТАКТА =====
