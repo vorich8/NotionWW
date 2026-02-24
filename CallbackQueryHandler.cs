@@ -1,4 +1,4 @@
-﻿using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using TeamManagerBot.Keyboards;
 using TeamManagerBot.Models;
@@ -8,7 +8,7 @@ using Telegram.Bot.Types;
 using Telegram.Bot.Types.ReplyMarkups;
 using static System.Net.Mime.MediaTypeNames;
 using DbUser = TeamManagerBot.Models.User;
-using TelegramUser = Telegram.Bot.Types.User; 
+using TelegramUser = Telegram.Bot.Types.User;
 
 namespace TeamManagerBot.Handlers
 {
@@ -120,7 +120,7 @@ namespace TeamManagerBot.Handlers
 
             Console.WriteLine($"ℹ️ Состояние пользователя не найдено, игнорируем сообщение");
             Console.WriteLine("════════════════════════════════════════");
-            
+
 
             return false;
         }
@@ -1448,7 +1448,7 @@ namespace TeamManagerBot.Handlers
                     $"assign_task_to_user_{projectId}_{userId}")
             });
 
-                    buttons.Add(new List<InlineKeyboardButton>
+            buttons.Add(new List<InlineKeyboardButton>
             {
                 InlineKeyboardButton.WithCallbackData("◀️ Назад", CallbackData.TasksCreate)
             });
@@ -1834,7 +1834,7 @@ namespace TeamManagerBot.Handlers
                 case "crypto_link_deal_skip":
                     await HandleLinkDealSkipAsync(chatId, userId, cancellationToken);
                     break;
-                case "crypto_add_circle":  
+                case "crypto_add_circle":
                     await StartAddCryptoCircleAsync(chatId, userId, cancellationToken);
                     break;
                 case "crypto_add_deal":
@@ -1917,7 +1917,7 @@ namespace TeamManagerBot.Handlers
                     await ShowExpensesDetailsAsync(chatId, cancellationToken);
                     break;
 
-                
+
 
                 // ===== FAST INVEST =====
                 case "fastinvest_all":
@@ -2100,7 +2100,7 @@ namespace TeamManagerBot.Handlers
                     {
                         await HandleDepositActionAsync(chatId, userId, callbackData, cancellationToken);
                     }
-                    
+
                     break;
             }
         }
@@ -2176,53 +2176,53 @@ namespace TeamManagerBot.Handlers
             _userStates.Remove(userId);
         }
         private async Task ShowInvestmentsAsync(long chatId, CancellationToken cancellationToken)
-{
-    try
-    {
-        var investments = await _financeService.GetRecordsByTypeAsync(FinancialRecordType.Investment);
-        var allExpenses = await _financeService.GetRecordsByTypeAsync(FinancialRecordType.Expense);
-        var withdrawals = allExpenses.Where(e => e.Category?.Trim().ToLower() == "вывод вклада").ToList();
-
-        var totalInvested = investments.Sum(i => i.Amount);
-        var totalWithdrawn = withdrawals.Sum(w => w.Amount);
-        var totalProfit = totalWithdrawn - totalInvested;
-        var totalBalance = totalInvested - totalWithdrawn;
-
-        var investorsCount = investments.Select(i => i.UserId).Where(id => id.HasValue).Distinct().Count();
-
-        var text = "👥 ВКЛАДЫ УЧАСТНИКОВ\n\n" +
-                   $"💰 ОБЩИЙ БАЛАНС: {totalBalance} ₽ \n" +
-                   $"┌─────────────────────────────────\n" +
-                   $"│ 📈 Прибыль: {totalProfit} ₽ \n" +
-                   $"│ 💵 Внесено: {totalInvested} ₽\n" +
-                   $"│ 💳 Выведено: {totalWithdrawn} ₽\n" +
-                   $"│ 👥 Участников: {investorsCount}\n" +
-                   $"└─────────────────────────────────\n\n";
-
-        // Детальная статистика по участникам
-        var userIds = investments.Select(i => i.UserId)
-            .Union(withdrawals.Select(w => w.UserId))
-            .Where(id => id.HasValue)
-            .Select(id => id.Value)
-            .Distinct()
-            .ToList();
-
-        var users = await _userService.GetAllUsersAsync();
-
-        if (userIds.Any())
         {
-            text += "👤 ПО УЧАСТНИКАМ:\n";
-            foreach (var uid in userIds)
+            try
             {
-                var user = users.FirstOrDefault(u => u.TelegramId == uid);
-                var userName = user != null
-                    ? (!string.IsNullOrEmpty(user.Username) ? $"@{user.Username}" : user.FirstName)
-                    : $"ID:{uid}";
+                var investments = await _financeService.GetRecordsByTypeAsync(FinancialRecordType.Investment);
+                var allExpenses = await _financeService.GetRecordsByTypeAsync(FinancialRecordType.Expense);
+                var withdrawals = allExpenses.Where(e => e.Category?.Trim().ToLower() == "вывод вклада").ToList();
 
-                var invested = investments.Where(i => i.UserId == uid).Sum(i => i.Amount);
-                var withdrawn = withdrawals.Where(w => w.UserId == uid).Sum(w => w.Amount);
-                var profit = withdrawn - invested;
-                var balance = invested - withdrawn;
+                var totalInvested = investments.Sum(i => i.Amount);
+                var totalWithdrawn = withdrawals.Sum(w => w.Amount);
+                var totalProfit = totalWithdrawn - totalInvested;
+                var totalBalance = totalInvested - totalWithdrawn;
+
+                var investorsCount = investments.Select(i => i.UserId).Where(id => id.HasValue).Distinct().Count();
+
+                var text = "👥 ВКЛАДЫ УЧАСТНИКОВ\n\n" +
+                           $"💰 ОБЩИЙ БАЛАНС: {totalBalance} ₽ \n" +
+                           $"┌─────────────────────────────────\n" +
+                           $"│ 📈 Прибыль: {totalProfit} ₽ \n" +
+                           $"│ 💵 Внесено: {totalInvested} ₽\n" +
+                           $"│ 💳 Выведено: {totalWithdrawn} ₽\n" +
+                           $"│ 👥 Участников: {investorsCount}\n" +
+                           $"└─────────────────────────────────\n\n";
+
+                // Детальная статистика по участникам
+                var userIds = investments.Select(i => i.UserId)
+                    .Union(withdrawals.Select(w => w.UserId))
+                    .Where(id => id.HasValue)
+                    .Select(id => id.Value)
+                    .Distinct()
+                    .ToList();
+
+                var users = await _userService.GetAllUsersAsync();
+
+                if (userIds.Any())
+                {
+                    text += "👤 ПО УЧАСТНИКАМ:\n";
+                    foreach (var uid in userIds)
+                    {
+                        var user = users.FirstOrDefault(u => u.TelegramId == uid);
+                        var userName = user != null
+                            ? (!string.IsNullOrEmpty(user.Username) ? $"@{user.Username}" : user.FirstName)
+                            : $"ID:{uid}";
+
+                        var invested = investments.Where(i => i.UserId == uid).Sum(i => i.Amount);
+                        var withdrawn = withdrawals.Where(w => w.UserId == uid).Sum(w => w.Amount);
+                        var profit = withdrawn - invested;
+                        var balance = invested - withdrawn;
 
                         text += $"\n{userName}\n" +
                $"  💰 БАЛАНС: {balance} ₽ \n" +
@@ -2230,13 +2230,13 @@ namespace TeamManagerBot.Handlers
                $"  ├─ 💵 Внесено: {invested} ₽\n" +
                $"  └─ 💳 Выведено: {withdrawn} ₽\n";
                     }
-        }
-        else
-        {
-            text += "📭 Нет данных по участникам\n";
-        }
+                }
+                else
+                {
+                    text += "📭 Нет данных по участникам\n";
+                }
 
-        var buttons = new List<List<InlineKeyboardButton>>
+                var buttons = new List<List<InlineKeyboardButton>>
         {
             new()
             {
@@ -2253,14 +2253,14 @@ namespace TeamManagerBot.Handlers
             }
         };
 
-        await _menuManager.ShowInlineMenuAsync(chatId, text, new InlineKeyboardMarkup(buttons), "investments", cancellationToken);
-    }
-    catch (Exception ex)
-    {
-        _logger.LogError(ex, "Error in ShowInvestmentsAsync");
-        await _menuManager.SendTemporaryMessageAsync(chatId, "❌ Ошибка загрузки данных", cancellationToken, 3);
-    }
-}
+                await _menuManager.ShowInlineMenuAsync(chatId, text, new InlineKeyboardMarkup(buttons), "investments", cancellationToken);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error in ShowInvestmentsAsync");
+                await _menuManager.SendTemporaryMessageAsync(chatId, "❌ Ошибка загрузки данных", cancellationToken, 3);
+            }
+        }
 
         // ========== ДОБАВЛЕНИЕ ВКЛАДА ==========
         private async Task StartAddInvestmentAsync(long chatId, long userId, CancellationToken cancellationToken)
@@ -2279,17 +2279,17 @@ namespace TeamManagerBot.Handlers
                 {
                     InlineKeyboardButton.WithCallbackData($"{roleIcon}{userName}", $"investment_select_user_{user.TelegramId}")
                 });
-                    }
+            }
 
-                    if (users.Count > 10)
-                    {
-                        buttons.Add(new List<InlineKeyboardButton>
+            if (users.Count > 10)
+            {
+                buttons.Add(new List<InlineKeyboardButton>
                 {
                     InlineKeyboardButton.WithCallbackData($"🔍 ПОИСК ({users.Count - 10})", "investment_search_user")
                 });
-                    }
+            }
 
-                    buttons.Add(new List<InlineKeyboardButton>
+            buttons.Add(new List<InlineKeyboardButton>
             {
                 InlineKeyboardButton.WithCallbackData("◀️ Назад", "finance_investments")
             });
@@ -2765,7 +2765,7 @@ namespace TeamManagerBot.Handlers
             new()
             {
                 InlineKeyboardButton.WithCallbackData("💰 Выплаты", "fastinvest_payouts"),
-                InlineKeyboardButton.WithCallbackData("◀️ Назад", "finance_accounts") 
+                InlineKeyboardButton.WithCallbackData("◀️ Назад", "finance_accounts")
             }
         };
 
@@ -3595,7 +3595,7 @@ namespace TeamManagerBot.Handlers
             await SendTemporaryMessageAsync(chatId, "Введите причину штрафа/предупреждения:", cancellationToken);
         }
 
-        
+
         private async Task ShowFastInvestPayoutsAsync(long chatId, CancellationToken cancellationToken)
         {
             var investments = await _fastInvestService.GetAllInvestmentsAsync();
@@ -5141,7 +5141,7 @@ namespace TeamManagerBot.Handlers
         {
             InlineKeyboardButton.WithCallbackData("➕ Новый круг", "crypto_add_circle"),
             InlineKeyboardButton.WithCallbackData("📊 Все круги", "crypto_all_circles")
-            
+
         },
         new()
         {
@@ -7306,18 +7306,6 @@ namespace TeamManagerBot.Handlers
                 case "db_add_contact_birthdate":
                     await HandleAddContactBirthDateAsync(chatId, userId, text, state, cancellationToken);
                     break;
-                case "db_add_contact_card_number":
-                    await HandleAddContactCardNumberAsync(chatId, userId, text, state, cancellationToken);
-                    break;
-                case "db_add_contact_cvv":
-                    await HandleAddContactCvvAsync(chatId, userId, text, state, cancellationToken);
-                    break;
-                case "db_add_contact_card_expiry":
-                    await HandleAddContactCardExpiryAsync(chatId, userId, text, state, cancellationToken);
-                    break;
-                case "db_add_contact_security_word":
-                    await HandleAddContactSecurityWordAsync(chatId, userId, text, state, cancellationToken);
-                    break;
                 case "db_add_contact_our_phone":
                     await HandleAddContactOurPhoneAsync(chatId, userId, text, state, cancellationToken);
                     break;
@@ -7356,7 +7344,7 @@ namespace TeamManagerBot.Handlers
                     break;
                 case "db_add_contact_notes":
                     await HandleAddContactNotesAsync(chatId, userId, text, state, cancellationToken);
-                    break;               
+                    break;
                 case "db_edit_contact_select_field":
                     await HandleEditContactSelectFieldAsync(chatId, userId, text, state, cancellationToken);
                     break;
@@ -7365,6 +7353,9 @@ namespace TeamManagerBot.Handlers
                     break;
                 case "db_add_card_number":
                     await HandleAddCardNumberAsync(chatId, userId, text, state, cancellationToken);
+                    break;
+                case "db_edit_contact_card_value":
+                    await HandleEditContactCardValueAsync(chatId, userId, text, state, cancellationToken);
                     break;
                 case "db_contact_search":
                     await HandleContactSearchAsync(chatId, userId, text, cancellationToken);
@@ -7810,12 +7801,14 @@ namespace TeamManagerBot.Handlers
                     {
                         await SendTemporaryMessageAsync(chatId, "✅ Банковская карта успешно добавлена!", cancellationToken);
                         _userStates.Remove(userId);
+                        _menuManager.ClearMenuState(chatId);
                         await ShowContactBanksAsync(chatId, contactId, cancellationToken);
                     }
                     else
                     {
                         await SendTemporaryMessageAsync(chatId, "❌ Не удалось добавить карту.", cancellationToken);
                         _userStates.Remove(userId);
+                        _menuManager.ClearMenuState(chatId);
                     }
                     break;
             }
@@ -8031,7 +8024,7 @@ namespace TeamManagerBot.Handlers
 
                     await SendTemporaryMessageAsync(chatId,
                         $"✅ Задача \"{task.Title}\" создана!\n👤 Исполнитель: {assignedName}",
-                        cancellationToken, 5); 
+                        cancellationToken, 5);
 
                     _userStates.Remove(userId);
                     _menuManager.ClearMenuState(chatId);
@@ -8156,7 +8149,7 @@ namespace TeamManagerBot.Handlers
             var fieldName = field switch
             {
                 1 => "Telegram username",
-                2 => "Полное имя",
+                2 => "ФИО",
                 3 => "Телефон",
                 4 => "Номер карты",
                 5 => "CVV",
@@ -8385,7 +8378,7 @@ namespace TeamManagerBot.Handlers
                             };
                             await SendTemporaryMessageAsync(chatId,
                                 "💳 ДОБАВЛЕНИЕ БАНКОВСКОЙ КАРТЫ\n\n" +
-                                "Введите номер карты (последние 4 цифры):", cancellationToken);
+                                "Введите номер карты (целиком):", cancellationToken);
                         }
                         break;
                     }
@@ -8443,7 +8436,7 @@ namespace TeamManagerBot.Handlers
                 case var _ when callbackData.StartsWith("contact_set_primary_bank_"):
                     {
                         var parts = callbackData.Split('_');
-                        if (parts.Length >= 5 && int.TryParse(parts[4], out int contactId))
+                        if (parts.Length >= 6 && int.TryParse(parts[4], out int contactId))
                         {
                             var cardNumber = parts.Length >= 6 ? parts[5] : "";
                             await SetPrimaryBankCardAsync(chatId, contactId, cardNumber, cancellationToken);
@@ -8951,6 +8944,7 @@ namespace TeamManagerBot.Handlers
                 }
 
                 await SendTemporaryMessageAsync(chatId, "✅ Основная карта обновлена!", cancellationToken);
+                _menuManager.ClearMenuState(chatId);
                 await ShowContactBanksAsync(chatId, contactId, cancellationToken);
             }
             catch (Exception ex)
@@ -9578,7 +9572,7 @@ namespace TeamManagerBot.Handlers
                     await _menuManager.ShowFinanceMenuAsync(chatId, cancellationToken);
                     break;
 
-                case CallbackData.BackToKpi: 
+                case CallbackData.BackToKpi:
                     await _menuManager.ShowKPIMenuAsync(chatId, cancellationToken);
                     break;
 
@@ -12833,19 +12827,10 @@ namespace TeamManagerBot.Handlers
                     else if (callbackData.StartsWith("db_contact_card_primary_"))
                     {
                         var parts = callbackData.Split('_');
-                        if (parts.Length >= 5 && int.TryParse(parts[4], out int contactId))
+                        if (parts.Length >= 6 && int.TryParse(parts[4], out int contactId))
                         {
                             var cardNumber = string.Join("_", parts.Skip(5));
                             await SetPrimaryBankCardAsync(chatId, userId, contactId, cardNumber, cancellationToken);
-                        }
-                    }
-                    else if (callbackData.StartsWith("db_contact_card_delete_"))
-                    {
-                        var parts = callbackData.Split('_');
-                        if (parts.Length >= 5 && int.TryParse(parts[4], out int contactId))
-                        {
-                            var cardNumber = string.Join("_", parts.Skip(5));
-                            await ShowDeleteCardConfirmationAsync(chatId, contactId, cardNumber, cancellationToken);
                         }
                     }
                     else if (callbackData.StartsWith("db_contact_card_delete_confirm_"))
@@ -12857,7 +12842,42 @@ namespace TeamManagerBot.Handlers
                             await DeleteBankCardAsync(chatId, userId, contactId, cardNumber, cancellationToken);
                         }
                     }
-                    
+                    else if (callbackData.StartsWith("db_contact_card_delete_"))
+                    {
+                        var parts = callbackData.Split('_');
+                        if (parts.Length >= 5 && int.TryParse(parts[4], out int contactId))
+                        {
+                            var cardNumber = string.Join("_", parts.Skip(5));
+                            await ShowDeleteCardConfirmationAsync(chatId, contactId, cardNumber, cancellationToken);
+                        }
+                    }
+
+                    else if (callbackData.StartsWith("db_contact_card_open_"))
+                    {
+                        var parts = callbackData.Split('_');
+                        if (parts.Length >= 6 && int.TryParse(parts[4], out int contactId) && int.TryParse(parts[5], out int cardIndex))
+                        {
+                            await ShowContactCardDetailsAsync(chatId, contactId, cardIndex, cancellationToken);
+                        }
+                    }
+                    else if (callbackData.StartsWith("db_contact_card_edit_field_"))
+                    {
+                        var parts = callbackData.Split('_');
+                        if (parts.Length >= 8 && int.TryParse(parts[5], out int contactId) && int.TryParse(parts[6], out int cardIndex))
+                        {
+                            var field = string.Join("_", parts.Skip(7));
+                            await StartEditContactCardFieldAsync(chatId, userId, contactId, cardIndex, field, cancellationToken);
+                        }
+                    }
+                    else if (callbackData.StartsWith("db_contact_card_edit_"))
+                    {
+                        var parts = callbackData.Split('_');
+                        if (parts.Length >= 6 && int.TryParse(parts[4], out int contactId) && int.TryParse(parts[5], out int cardIndex))
+                        {
+                            await StartEditContactCardAsync(chatId, userId, contactId, cardIndex, cancellationToken);
+                        }
+                    }
+
                     // ===== ЗАМЕТКИ КОНТАКТОВ ===== ← ВСТАВЬ СЮДА
                     else if (callbackData.StartsWith("db_contact_notes_"))
                     {
@@ -12946,16 +12966,115 @@ namespace TeamManagerBot.Handlers
 
             await _menuManager.SendTemporaryMessageAsync(chatId,
                 $"💳 ДОБАВЛЕНИЕ КАРТЫ ДЛЯ {contact.FullName ?? contact.TelegramUsername}\n\n" +
-                "Введите номер карты (последние 4 цифры):", cancellationToken);
+                "Введите номер карты (целиком):", cancellationToken);
         }
 
         private async Task HandleAddCardNumberAsync(long chatId, long userId, string text, UserState state, CancellationToken cancellationToken)
         {
             var contactId = (int)state.Data["contactId"]!;
 
+            var contact = await _contactService.GetContactAsync(contactId);
+            if (contact == null)
+            {
+                await _menuManager.SendTemporaryMessageAsync(chatId, "❌ Контакт не найден", cancellationToken, 3);
+                _userStates.Remove(userId);
+                return;
+            }
+
+            var step = state.Step;
+
+            if (step == 1)
+            {
+                state.Data["cardNumber"] = text.Trim();
+                state.Step = 2;
+                _userStates[userId] = state;
+
+                await _menuManager.SendTemporaryMessageAsync(chatId,
+                    "📝 ШАГ 2/7\n\nВведите CVV:", cancellationToken);
+                return;
+            }
+
+            if (step == 2)
+            {
+                state.Data["cvv"] = text.Trim();
+                state.Step = 3;
+                _userStates[userId] = state;
+
+                await _menuManager.SendTemporaryMessageAsync(chatId,
+                    "📝 ШАГ 3/7\n\nВведите срок действия карты (MM/YY):", cancellationToken);
+                return;
+            }
+
+            if (step == 3)
+            {
+                state.Data["cardExpiry"] = text.Trim();
+                state.Step = 4;
+                _userStates[userId] = state;
+
+                await _menuManager.SendTemporaryMessageAsync(chatId,
+                    "📝 ШАГ 4/7\n\nВведите кодовое слово:", cancellationToken);
+                return;
+            }
+
+            if (step == 4)
+            {
+                state.Data["securityWord"] = text.Trim();
+                state.Step = 5;
+                _userStates[userId] = state;
+
+                await _menuManager.SendTemporaryMessageAsync(chatId,
+                    "📝 ШАГ 5/7\n\nВведите название банка (например: Тинькофф, Сбер):", cancellationToken);
+                return;
+            }
+
+            if (step == 5)
+            {
+                state.Data["bankName"] = text.Trim();
+                state.Step = 6;
+                _userStates[userId] = state;
+
+                await _menuManager.SendTemporaryMessageAsync(chatId,
+                    "📝 ШАГ 6/7\n\nВведите тип карты: debit или credit", cancellationToken);
+                return;
+            }
+
+            if (step == 6)
+            {
+                var cardTypeStep6 = text.Trim().ToLowerInvariant();
+                if (cardTypeStep6 != "debit" && cardTypeStep6 != "credit")
+                {
+                    await _menuManager.SendTemporaryMessageAsync(chatId,
+                        "❌ Неверный тип карты. Введите debit или credit", cancellationToken);
+                    return;
+                }
+
+                state.Data["cardType"] = cardTypeStep6;
+                state.Step = 7;
+                _userStates[userId] = state;
+
+                await _menuManager.SendTemporaryMessageAsync(chatId,
+                    "📝 ШАГ 7/7\n\nВведите статус карты (рабочая/лок/115/161):", cancellationToken);
+                return;
+            }
+
+            var cardStatus = text.Trim().ToLowerInvariant();
+            var validStatuses = new[] { "рабочая", "лок", "115", "161" };
+            if (!validStatuses.Contains(cardStatus))
+            {
+                await _menuManager.SendTemporaryMessageAsync(chatId,
+                    "❌ Неверный статус. Введите: рабочая, лок, 115 или 161", cancellationToken);
+                return;
+            }
+
             var card = new BankCard
             {
-                CardNumber = text,
+                CardNumber = state.Data["cardNumber"]?.ToString(),
+                CVV = state.Data["cvv"]?.ToString(),
+                CardExpiry = state.Data["cardExpiry"]?.ToString(),
+                SecurityWord = state.Data["securityWord"]?.ToString(),
+                BankName = state.Data["bankName"]?.ToString(),
+                CardType = state.Data["cardType"]?.ToString(),
+                CardStatus = cardStatus,
                 IsPrimary = false
             };
 
@@ -12965,6 +13084,7 @@ namespace TeamManagerBot.Handlers
             {
                 await _menuManager.SendTemporaryMessageAsync(chatId, "✅ Карта добавлена", cancellationToken, 3);
                 _userStates.Remove(userId);
+                _menuManager.ClearMenuState(chatId);
                 await ShowContactCardsAsync(chatId, contactId, cancellationToken);
             }
             else
@@ -12975,11 +13095,19 @@ namespace TeamManagerBot.Handlers
 
         private async Task SetPrimaryBankCardAsync(long chatId, long userId, int contactId, string cardNumber, CancellationToken cancellationToken)
         {
+            var contact = await _contactService.GetContactAsync(contactId);
+            if (contact == null)
+            {
+                await _menuManager.SendTemporaryMessageAsync(chatId, "❌ Контакт не найден", cancellationToken, 3);
+                return;
+            }
+
             var result = await _contactService.SetPrimaryBankCardAsync(contactId, cardNumber);
 
             if (result)
             {
                 await _menuManager.SendTemporaryMessageAsync(chatId, "⭐ Основная карта обновлена", cancellationToken, 3);
+                _menuManager.ClearMenuState(chatId);
                 await ShowContactCardsAsync(chatId, contactId, cancellationToken);
             }
             else
@@ -13069,7 +13197,12 @@ namespace TeamManagerBot.Handlers
         // ===== ПОКАЗ КОНТАКТОВ ПО СТАТУСУ =====
         private async Task ShowContactsByStatusAsync(long chatId, string status, CancellationToken cancellationToken)
         {
-            var contacts = await _contactService.GetContactsByStatusAsync(status);
+            var allContacts = await _contactService.GetAllContactsAsync();
+            var contacts = status switch
+            {
+                "115" => allContacts.Where(c => c.CardStatus == "115" || c.CardStatus == "161" || c.BankCards.Any(b => b.CardStatus == "115" || b.CardStatus == "161")).ToList(),
+                _ => allContacts.Where(c => c.CardStatus == status || c.BankCards.Any(b => b.CardStatus == status)).ToList()
+            };
 
             var statusEmoji = status switch
             {
@@ -13080,7 +13213,8 @@ namespace TeamManagerBot.Handlers
                 _ => "⚪"
             };
 
-            var text = $"{statusEmoji} КОНТАКТЫ СО СТАТУСОМ: {status}\n\n";
+            var statusTitle = status == "115" ? "115/161" : status;
+            var text = $"{statusEmoji} КОНТАКТЫ СО СТАТУСОМ: {statusTitle}\n\n";
 
             if (!contacts.Any())
             {
@@ -13092,41 +13226,40 @@ namespace TeamManagerBot.Handlers
 
                 foreach (var contact in contacts.Take(10))
                 {
-                    var name = !string.IsNullOrEmpty(contact.FullName)
-                        ? contact.FullName
-                        : $"@{contact.TelegramUsername}";
-
+                    var name = !string.IsNullOrEmpty(contact.FullName) ? contact.FullName : $"@{contact.TelegramUsername}";
                     text += $"👤 {name}\n";
-                    if (!string.IsNullOrEmpty(contact.PhoneNumber))
-                        text += $"   📞 {contact.PhoneNumber}\n";
-                    if (!string.IsNullOrEmpty(contact.CardNumber))
-                        text += $"   💳 •••• {contact.CardNumber[^4..]}\n";
+
+                    var matchedCards = status == "115"
+                        ? contact.BankCards.Where(b => b.CardStatus == "115" || b.CardStatus == "161").ToList()
+                        : contact.BankCards.Where(b => b.CardStatus == status).ToList();
+
+                    if (!string.IsNullOrEmpty(contact.CardStatus) && (status == "115" ? (contact.CardStatus == "115" || contact.CardStatus == "161") : contact.CardStatus == status))
+                        text += $"   📌 Статус контакта: {contact.CardStatus}\n";
+
+                    if (matchedCards.Any())
+                    {
+                        foreach (var card in matchedCards.Take(3))
+                        {
+                            var cardType = card.CardType == "debit" ? "debit" : card.CardType == "credit" ? "credit" : "-";
+                            text += $"   💳 {MaskCardNumber(card.CardNumber)} | {cardType} | статус: {card.CardStatus ?? "-"}\n";
+                        }
+                    }
+
                     text += "\n";
                 }
 
                 if (contacts.Count > 10)
-                {
                     text += $"... и еще {contacts.Count - 10} контактов\n";
-                }
             }
 
             var buttons = new List<List<InlineKeyboardButton>>();
             foreach (var contact in contacts.Take(5))
             {
-                var name = !string.IsNullOrEmpty(contact.FullName)
-                    ? contact.FullName
-                    : $"@{contact.TelegramUsername}";
-
-                buttons.Add(new List<InlineKeyboardButton>
-        {
-            InlineKeyboardButton.WithCallbackData($"👤 {name}", $"db_contact_view_{contact.Id}")
-        });
+                var name = !string.IsNullOrEmpty(contact.FullName) ? contact.FullName : $"@{contact.TelegramUsername}";
+                buttons.Add(new List<InlineKeyboardButton> { InlineKeyboardButton.WithCallbackData($"👤 {name}", $"db_contact_view_{contact.Id}") });
             }
 
-            buttons.Add(new List<InlineKeyboardButton>
-    {
-        InlineKeyboardButton.WithCallbackData("◀️ Назад", "db_contacts_menu")
-    });
+            buttons.Add(new List<InlineKeyboardButton> { InlineKeyboardButton.WithCallbackData("◀️ Назад", "db_contacts_menu") });
 
             await _menuManager.ShowInlineMenuAsync(chatId, text, new InlineKeyboardMarkup(buttons), $"db_contacts_status_{status}", cancellationToken);
         }
@@ -13135,7 +13268,7 @@ namespace TeamManagerBot.Handlers
         private async Task ShowContactsWithCardsAsync(long chatId, CancellationToken cancellationToken)
         {
             var allContacts = await _contactService.GetAllContactsAsync();
-            var contacts = allContacts.Where(c => !string.IsNullOrEmpty(c.CardNumber)).ToList();
+            var contacts = allContacts.Where(c => c.BankCards.Any()).ToList();
 
             var text = "💳 КОНТАКТЫ С КАРТАМИ\n\n";
 
@@ -13149,42 +13282,28 @@ namespace TeamManagerBot.Handlers
 
                 foreach (var contact in contacts.Take(10))
                 {
-                    var name = !string.IsNullOrEmpty(contact.FullName)
-                        ? contact.FullName
-                        : $"@{contact.TelegramUsername}";
-
+                    var name = !string.IsNullOrEmpty(contact.FullName) ? contact.FullName : $"@{contact.TelegramUsername}";
                     text += $"👤 {name}\n";
-                    text += $"   💳 •••• {contact.CardNumber[^4..]}\n";
-                    if (!string.IsNullOrEmpty(contact.PhoneNumber))
-                        text += $"   📞 {contact.PhoneNumber}\n";
-                    if (!string.IsNullOrEmpty(contact.CardStatus))
-                        text += $"   Статус: {contact.CardStatus}\n";
+                    text += $"   💳 Карт: {contact.BankCards.Count}\n";
+
+                    foreach (var card in contact.BankCards.Take(2))
+                        text += $"   • {MaskCardNumber(card.CardNumber)} | {card.CardStatus ?? "-"}\n";
+
                     text += "\n";
                 }
 
                 if (contacts.Count > 10)
-                {
                     text += $"... и еще {contacts.Count - 10} контактов\n";
-                }
             }
 
             var buttons = new List<List<InlineKeyboardButton>>();
             foreach (var contact in contacts.Take(5))
             {
-                var name = !string.IsNullOrEmpty(contact.FullName)
-                    ? contact.FullName
-                    : $"@{contact.TelegramUsername}";
-
-                buttons.Add(new List<InlineKeyboardButton>
-        {
-            InlineKeyboardButton.WithCallbackData($"👤 {name}", $"db_contact_view_{contact.Id}")
-        });
+                var name = !string.IsNullOrEmpty(contact.FullName) ? contact.FullName : $"@{contact.TelegramUsername}";
+                buttons.Add(new List<InlineKeyboardButton> { InlineKeyboardButton.WithCallbackData($"👤 {name}", $"db_contact_view_{contact.Id}") });
             }
 
-            buttons.Add(new List<InlineKeyboardButton>
-    {
-        InlineKeyboardButton.WithCallbackData("◀️ Назад", "db_contacts_menu")
-    });
+            buttons.Add(new List<InlineKeyboardButton> { InlineKeyboardButton.WithCallbackData("◀️ Назад", "db_contacts_menu") });
 
             await _menuManager.ShowInlineMenuAsync(chatId, text, new InlineKeyboardMarkup(buttons), "db_contacts_with_cards", cancellationToken);
         }
@@ -13250,6 +13369,13 @@ namespace TeamManagerBot.Handlers
         // ===== УДАЛЕНИЕ КАРТЫ =====
         private async Task DeleteBankCardAsync(long chatId, long userId, int contactId, string cardNumber, CancellationToken cancellationToken)
         {
+            var contact = await _contactService.GetContactAsync(contactId);
+            if (contact == null)
+            {
+                await _menuManager.SendTemporaryMessageAsync(chatId, "❌ Контакт не найден", cancellationToken, 3);
+                return;
+            }
+
             var result = await _contactService.RemoveBankCardAsync(contactId, cardNumber);
 
             if (result)
@@ -13276,57 +13402,244 @@ namespace TeamManagerBot.Handlers
             var cards = contact.BankCards;
             var name = !string.IsNullOrEmpty(contact.FullName) ? contact.FullName : $"@{contact.TelegramUsername}";
 
-            var text = $"💳 КАРТЫ КОНТАКТА: {name}\n\n";
+            var text = $"💳 КАРТЫ КОНТАКТА\n👤 {name}\n📊 Всего карт: {cards.Count}\n\n";
 
             if (!cards.Any())
             {
-                text += "У контакта нет добавленных карт";
+                text += "Карт пока нет. Нажмите «➕ ДОБАВИТЬ КАРТУ».";
             }
             else
             {
-                foreach (var card in cards)
+                for (var i = 0; i < cards.Count; i++)
                 {
-                    var primary = card.IsPrimary ? "⭐ " : "";
-                    text += $"{primary}•••• {card.CardNumber}\n";
-                    text += $"   Банк: {card.BankName ?? "не указан"}\n";
-                    text += $"   Тип: {(card.CardType == "debit" ? "Дебетовая" : "Кредитная")}\n";
-                    if (!string.IsNullOrEmpty(card.Notes))
-                        text += $"   📝 {card.Notes}\n";
-                    text += "\n";
+                    text += BuildCardInfoLine(i, cards[i]);
                 }
             }
 
             var buttons = new List<List<InlineKeyboardButton>>
-    {
-        new() { InlineKeyboardButton.WithCallbackData("➕ ДОБАВИТЬ КАРТУ", $"db_contact_add_card_{contactId}") }
-    };
+            {
+                new() { InlineKeyboardButton.WithCallbackData("➕ ДОБАВИТЬ КАРТУ", $"db_contact_add_card_{contactId}") }
+            };
 
-            if (cards.Any())
+            for (var i = 0; i < cards.Count; i++)
             {
-                foreach (var card in cards.Take(3))
+                var card = cards[i];
+                var cardType = card.CardType == "debit" ? "ДЕБЕТ" : card.CardType == "credit" ? "КРЕДИТ" : "НЕ УКАЗАН";
+                buttons.Add(new List<InlineKeyboardButton>
                 {
-                    if (!card.IsPrimary)
-                    {
-                        buttons.Add(new List<InlineKeyboardButton>
-                {
-                    InlineKeyboardButton.WithCallbackData($"⭐ Сделать основной •••• {card.CardNumber}",
-                        $"db_contact_card_primary_{contactId}_{card.CardNumber}")
+                    InlineKeyboardButton.WithCallbackData($"💳 {MaskCardNumber(card.CardNumber)} | {cardType} | {card.CardStatus ?? "-"}", $"db_contact_card_open_{contactId}_{i}")
                 });
-                    }
-                    buttons.Add(new List<InlineKeyboardButton>
-            {
-                InlineKeyboardButton.WithCallbackData($"🗑️ Удалить •••• {card.CardNumber}",
-                    $"db_contact_card_delete_{contactId}_{card.CardNumber}")
-            });
-                }
             }
 
-            buttons.Add(new List<InlineKeyboardButton>
-    {
-        InlineKeyboardButton.WithCallbackData("◀️ Назад", $"db_contact_view_{contactId}")
-    });
+            buttons.Add(new List<InlineKeyboardButton> { InlineKeyboardButton.WithCallbackData("◀️ Назад", $"db_contact_view_{contactId}") });
 
             await _menuManager.ShowInlineMenuAsync(chatId, text, new InlineKeyboardMarkup(buttons), $"db_contact_cards_{contactId}", cancellationToken);
+        }
+
+        private async Task ShowContactCardDetailsAsync(long chatId, int contactId, int cardIndex, CancellationToken cancellationToken)
+        {
+            var contact = await _contactService.GetContactAsync(contactId);
+            if (contact == null || cardIndex < 0 || cardIndex >= contact.BankCards.Count)
+            {
+                await _menuManager.SendTemporaryMessageAsync(chatId, "❌ Карта не найдена", cancellationToken, 3);
+                return;
+            }
+
+            var card = contact.BankCards[cardIndex];
+            var name = !string.IsNullOrEmpty(contact.FullName) ? contact.FullName : $"@{contact.TelegramUsername}";
+            var cardType = card.CardType == "debit" ? "Дебетовая" : card.CardType == "credit" ? "Кредитная" : "не указан";
+
+            var text =
+                $"💳 КАРТА #{cardIndex + 1}\n" +
+                $"👤 Контакт: {name}\n\n" +
+                $"🔢 Номер: {MaskCardNumber(card.CardNumber)}\n" +
+                $"🏦 Банк: {card.BankName ?? "не указан"}\n" +
+                $"💳 Тип: {cardType}\n" +
+                $"🚦 Статус: {card.CardStatus ?? "не указан"}\n" +
+                $"📅 Срок: {card.CardExpiry ?? "не указан"}\n" +
+                $"🔐 CVV: {MaskSecret(card.CVV)}\n" +
+                $"🗝️ Кодовое слово: {MaskSecret(card.SecurityWord)}\n" +
+                $"⭐ Основная: {(card.IsPrimary ? "Да" : "Нет")}";
+
+            var buttons = new List<List<InlineKeyboardButton>>
+            {
+                new() { InlineKeyboardButton.WithCallbackData("✏️ Редактировать", $"db_contact_card_edit_{contactId}_{cardIndex}") },
+                new() { InlineKeyboardButton.WithCallbackData("⭐ Сделать основной", $"db_contact_card_primary_{contactId}_{card.CardNumber}") },
+                new() { InlineKeyboardButton.WithCallbackData("🗑️ Удалить", $"db_contact_card_delete_{contactId}_{card.CardNumber}") },
+                new() { InlineKeyboardButton.WithCallbackData("◀️ К картам", $"db_contact_cards_{contactId}") }
+            };
+
+            await _menuManager.ShowInlineMenuAsync(chatId, text, new InlineKeyboardMarkup(buttons), $"db_contact_card_open_{contactId}_{cardIndex}", cancellationToken);
+        }
+
+        private async Task StartEditContactCardAsync(long chatId, long userId, int contactId, int cardIndex, CancellationToken cancellationToken)
+        {
+            var contact = await _contactService.GetContactAsync(contactId);
+            if (contact == null || cardIndex < 0 || cardIndex >= contact.BankCards.Count)
+            {
+                await _menuManager.SendTemporaryMessageAsync(chatId, "❌ Карта не найдена", cancellationToken, 3);
+                return;
+            }
+
+            var buttons = new List<List<InlineKeyboardButton>>
+            {
+                new() { InlineKeyboardButton.WithCallbackData("🔢 Номер", $"db_contact_card_edit_field_{contactId}_{cardIndex}_number") },
+                new() { InlineKeyboardButton.WithCallbackData("🔐 CVV", $"db_contact_card_edit_field_{contactId}_{cardIndex}_cvv") },
+                new() { InlineKeyboardButton.WithCallbackData("📅 Срок", $"db_contact_card_edit_field_{contactId}_{cardIndex}_expiry") },
+                new() { InlineKeyboardButton.WithCallbackData("🗝️ Кодовое слово", $"db_contact_card_edit_field_{contactId}_{cardIndex}_security") },
+                new() { InlineKeyboardButton.WithCallbackData("🏦 Банк", $"db_contact_card_edit_field_{contactId}_{cardIndex}_bank") },
+                new() { InlineKeyboardButton.WithCallbackData("💳 Тип", $"db_contact_card_edit_field_{contactId}_{cardIndex}_type") },
+                new() { InlineKeyboardButton.WithCallbackData("🚦 Статус", $"db_contact_card_edit_field_{contactId}_{cardIndex}_status") },
+                new() { InlineKeyboardButton.WithCallbackData("◀️ К карте", $"db_contact_card_open_{contactId}_{cardIndex}") }
+            };
+
+            await _menuManager.ShowInlineMenuAsync(chatId,
+                "✏️ РЕДАКТИРОВАНИЕ КАРТЫ\n\nВыберите поле для изменения:",
+                new InlineKeyboardMarkup(buttons),
+                $"db_contact_card_edit_{contactId}_{cardIndex}",
+                cancellationToken);
+        }
+
+        private async Task StartEditContactCardFieldAsync(long chatId, long userId, int contactId, int cardIndex, string field, CancellationToken cancellationToken)
+        {
+            var contact = await _contactService.GetContactAsync(contactId);
+            if (contact == null || cardIndex < 0 || cardIndex >= contact.BankCards.Count)
+            {
+                await _menuManager.SendTemporaryMessageAsync(chatId, "❌ Карта не найдена", cancellationToken, 3);
+                return;
+            }
+
+            var card = contact.BankCards[cardIndex];
+            var prompt = field switch
+            {
+                "number" => "Введите полный номер карты:",
+                "cvv" => "Введите CVV:",
+                "expiry" => "Введите срок действия (MM/YY):",
+                "security" => "Введите кодовое слово:",
+                "bank" => "Введите название банка:",
+                "type" => "Введите тип карты: debit или credit",
+                "status" => "Введите статус карты: рабочая/лок/115/161",
+                _ => "Введите новое значение:"
+            };
+
+            _userStates[userId] = new UserState
+            {
+                CurrentAction = "db_edit_contact_card_value",
+                Step = 1,
+                Data = new Dictionary<string, object?>
+                {
+                    ["contactId"] = contactId,
+                    ["cardIndex"] = cardIndex,
+                    ["field"] = field,
+                    ["oldCardNumber"] = card.CardNumber
+                }
+            };
+
+            await _menuManager.SendTemporaryMessageAsync(chatId, $"✏️ {prompt}", cancellationToken);
+        }
+
+        private async Task HandleEditContactCardValueAsync(long chatId, long userId, string text, UserState state, CancellationToken cancellationToken)
+        {
+            var contactId = (int)state.Data["contactId"]!;
+            var cardIndex = (int)state.Data["cardIndex"]!;
+            var field = state.Data["field"]?.ToString() ?? string.Empty;
+            var oldCardNumber = state.Data["oldCardNumber"]?.ToString() ?? string.Empty;
+
+            var contact = await _contactService.GetContactAsync(contactId);
+            if (contact == null || cardIndex < 0 || cardIndex >= contact.BankCards.Count)
+            {
+                await _menuManager.SendTemporaryMessageAsync(chatId, "❌ Карта не найдена", cancellationToken, 3);
+                _userStates.Remove(userId);
+                return;
+            }
+
+            var card = contact.BankCards[cardIndex];
+            var value = text.Trim();
+
+            switch (field)
+            {
+                case "number":
+                    card.CardNumber = value;
+                    break;
+                case "cvv":
+                    card.CVV = value;
+                    break;
+                case "expiry":
+                    card.CardExpiry = value;
+                    break;
+                case "security":
+                    card.SecurityWord = value;
+                    break;
+                case "bank":
+                    card.BankName = value;
+                    break;
+                case "type":
+                    value = value.ToLowerInvariant();
+                    if (value != "debit" && value != "credit")
+                    {
+                        await _menuManager.SendTemporaryMessageAsync(chatId, "❌ Введите debit или credit", cancellationToken);
+                        return;
+                    }
+                    card.CardType = value;
+                    break;
+                case "status":
+                    value = value.ToLowerInvariant();
+                    var statuses = new[] { "рабочая", "лок", "115", "161" };
+                    if (!statuses.Contains(value))
+                    {
+                        await _menuManager.SendTemporaryMessageAsync(chatId, "❌ Введите: рабочая, лок, 115 или 161", cancellationToken);
+                        return;
+                    }
+                    card.CardStatus = value;
+                    break;
+                default:
+                    await _menuManager.SendTemporaryMessageAsync(chatId, "❌ Неизвестное поле", cancellationToken, 3);
+                    return;
+            }
+
+            var updated = await _contactService.UpdateBankCardAsync(contactId, oldCardNumber, card);
+            if (!updated)
+            {
+                await _menuManager.SendTemporaryMessageAsync(chatId, "❌ Не удалось обновить карту", cancellationToken, 3);
+                return;
+            }
+
+            _userStates.Remove(userId);
+            await _menuManager.SendTemporaryMessageAsync(chatId, "✅ Карта обновлена", cancellationToken, 3);
+            await ShowContactCardDetailsAsync(chatId, contactId, cardIndex, cancellationToken);
+        }
+
+        private static string BuildCardInfoLine(int index, BankCard card)
+        {
+            var cardType = card.CardType == "debit" ? "Дебетовая" : card.CardType == "credit" ? "Кредитная" : "не указан";
+            return $"{index + 1}. {MaskCardNumber(card.CardNumber)} {(card.IsPrimary ? "⭐" : "")}\n" +
+                   $"   🏦 Банк: {card.BankName ?? "не указан"}\n" +
+                   $"   💳 Тип: {cardType}\n" +
+                   $"   🚦 Статус: {card.CardStatus ?? "не указан"}\n" +
+                   $"   📅 Срок: {card.CardExpiry ?? "не указан"}\n\n";
+        }
+
+        private static string MaskCardNumber(string? cardNumber)
+        {
+            if (string.IsNullOrWhiteSpace(cardNumber))
+                return "••••";
+
+            return cardNumber.Length <= 4
+                ? $"•••• {cardNumber}"
+                : $"•••• {cardNumber[^4..]}";
+        }
+
+        private static string MaskSecret(string? value)
+        {
+            if (string.IsNullOrWhiteSpace(value))
+                return "не указан";
+
+            return new string('•', Math.Min(value.Length, 8));
+        }
+
+        private static bool IsContactCardBlocked(string? cardStatus)
+        {
+            return cardStatus == "лок" || cardStatus == "115" || cardStatus == "161";
         }
 
         // ===== ДОБАВЛЕНИЕ КОНТАКТА =====
@@ -13343,7 +13656,7 @@ namespace TeamManagerBot.Handlers
             };
 
             await _menuManager.SendTemporaryMessageAsync(chatId,
-                "📝 ДОБАВЛЕНИЕ НОВОГО КОНТАКТА (ШАГ 1/22)\n\n" +
+                "📝 ДОБАВЛЕНИЕ НОВОГО КОНТАКТА (ШАГ 1/17)\n\n" +
                 "Введите Telegram username (например: @username или просто username):", cancellationToken);
         }
 
@@ -13362,8 +13675,8 @@ namespace TeamManagerBot.Handlers
 
             await _menuManager.SendTemporaryMessageAsync(chatId,
                 $"✅ Username: @{username}\n\n" +
-                "📝 ШАГ 2/22\n\n" +
-                "Введите полное имя контакта (ФИО):\n" +
+                "📝 ШАГ 2/17\n\n" +
+                "Введите ФИО контакта:\n" +
                 "(или отправьте '-' чтобы пропустить)", cancellationToken);
         }
 
@@ -13379,7 +13692,7 @@ namespace TeamManagerBot.Handlers
             _userStates[userId] = state;
 
             await _menuManager.SendTemporaryMessageAsync(chatId,
-                "📝 ШАГ 3/22\n\n" +
+                "📝 ШАГ 3/17\n\n" +
                 "Введите ник/псевдоним контакта:\n" +
                 "(или отправьте '-' чтобы пропустить)", cancellationToken);
         }
@@ -13396,7 +13709,7 @@ namespace TeamManagerBot.Handlers
             _userStates[userId] = state;
 
             await _menuManager.SendTemporaryMessageAsync(chatId,
-                "📝 ШАГ 4/22\n\n" +
+                "📝 ШАГ 4/17\n\n" +
                 "Введите номер телефона контакта:\n" +
                 "(или отправьте '-' чтобы пропустить)", cancellationToken);
         }
@@ -13413,7 +13726,7 @@ namespace TeamManagerBot.Handlers
             _userStates[userId] = state;
 
             await _menuManager.SendTemporaryMessageAsync(chatId,
-                "📝 ШАГ 5/22\n\n" +
+                "📝 ШАГ 5/17\n\n" +
                 "Введите дату рождения в формате ДД.ММ.ГГГГ:\n" +
                 "(или отправьте '-' чтобы пропустить)", cancellationToken);
         }
@@ -13433,80 +13746,12 @@ namespace TeamManagerBot.Handlers
                 }
             }
 
-            state.CurrentAction = "db_add_contact_card_number";
+            state.CurrentAction = "db_add_contact_our_phone";
             state.Step = 6;
             _userStates[userId] = state;
 
             await _menuManager.SendTemporaryMessageAsync(chatId,
-                "📝 ШАГ 6/22 - ДАННЫЕ КАРТЫ\n\n" +
-                "Введите номер карты:\n" +
-                "(или отправьте '-' чтобы пропустить)", cancellationToken);
-        }
-
-        private async Task HandleAddContactCardNumberAsync(long chatId, long userId, string text, UserState state, CancellationToken cancellationToken)
-        {
-            if (text != "-")
-            {
-                state.Data["cardNumber"] = text;
-            }
-
-            state.CurrentAction = "db_add_contact_cvv";
-            state.Step = 7;
-            _userStates[userId] = state;
-
-            await _menuManager.SendTemporaryMessageAsync(chatId,
-                "📝 ШАГ 7/22\n\n" +
-                "Введите CVV карты:\n" +
-                "(или отправьте '-' чтобы пропустить)", cancellationToken);
-        }
-
-        private async Task HandleAddContactCvvAsync(long chatId, long userId, string text, UserState state, CancellationToken cancellationToken)
-        {
-            if (text != "-")
-            {
-                state.Data["cvv"] = text;
-            }
-
-            state.CurrentAction = "db_add_contact_card_expiry";
-            state.Step = 8;
-            _userStates[userId] = state;
-
-            await _menuManager.SendTemporaryMessageAsync(chatId,
-                "📝 ШАГ 8/22\n\n" +
-                "Введите срок действия карты (MM/YY):\n" +
-                "(или отправьте '-' чтобы пропустить)", cancellationToken);
-        }
-
-        private async Task HandleAddContactCardExpiryAsync(long chatId, long userId, string text, UserState state, CancellationToken cancellationToken)
-        {
-            if (text != "-")
-            {
-                state.Data["cardExpiry"] = text;
-            }
-
-            state.CurrentAction = "db_add_contact_security_word";
-            state.Step = 9;
-            _userStates[userId] = state;
-
-            await _menuManager.SendTemporaryMessageAsync(chatId,
-                "📝 ШАГ 9/22\n\n" +
-                "Введите кодовое слово:\n" +
-                "(или отправьте '-' чтобы пропустить)", cancellationToken);
-        }
-
-        private async Task HandleAddContactSecurityWordAsync(long chatId, long userId, string text, UserState state, CancellationToken cancellationToken)
-        {
-            if (text != "-")
-            {
-                state.Data["securityWord"] = text;
-            }
-
-            state.CurrentAction = "db_add_contact_our_phone";
-            state.Step = 10;
-            _userStates[userId] = state;
-
-            await _menuManager.SendTemporaryMessageAsync(chatId,
-                "📝 ШАГ 10/22 - НАШИ ДАННЫЕ\n\n" +
+                "📝 ШАГ 6/17 - НАШИ ДАННЫЕ\n\n" +
                 "Введите наш номер телефона, привязанный к контакту:\n" +
                 "(или отправьте '-' чтобы пропустить)", cancellationToken);
         }
@@ -13519,11 +13764,11 @@ namespace TeamManagerBot.Handlers
             }
 
             state.CurrentAction = "db_add_contact_bank_password";
-            state.Step = 11;
+            state.Step = 7;
             _userStates[userId] = state;
 
             await _menuManager.SendTemporaryMessageAsync(chatId,
-                "📝 ШАГ 11/22\n\n" +
+                "📝 ШАГ 7/17\n\n" +
                 "Введите пароль от банка:\n" +
                 "(или отправьте '-' чтобы пропустить)", cancellationToken);
         }
@@ -13536,11 +13781,11 @@ namespace TeamManagerBot.Handlers
             }
 
             state.CurrentAction = "db_add_contact_pin";
-            state.Step = 12;
+            state.Step = 8;
             _userStates[userId] = state;
 
             await _menuManager.SendTemporaryMessageAsync(chatId,
-                "📝 ШАГ 12/22\n\n" +
+                "📝 ШАГ 8/17\n\n" +
                 "Введите пин-код от личного кабинета:\n" +
                 "(или отправьте '-' чтобы пропустить)", cancellationToken);
         }
@@ -13553,11 +13798,11 @@ namespace TeamManagerBot.Handlers
             }
 
             state.CurrentAction = "db_add_contact_our_email";
-            state.Step = 13;
+            state.Step = 9;
             _userStates[userId] = state;
 
             await _menuManager.SendTemporaryMessageAsync(chatId,
-                "📝 ШАГ 13/22\n\n" +
+                "📝 ШАГ 9/17\n\n" +
                 "Введите нашу почту, привязанную к контакту:\n" +
                 "(или отправьте '-' чтобы пропустить)", cancellationToken);
         }
@@ -13570,11 +13815,11 @@ namespace TeamManagerBot.Handlers
             }
 
             state.CurrentAction = "db_add_contact_passport_series";
-            state.Step = 14;
+            state.Step = 10;
             _userStates[userId] = state;
 
             await _menuManager.SendTemporaryMessageAsync(chatId,
-                "📝 ШАГ 14/22 - ПАСПОРТНЫЕ ДАННЫЕ\n\n" +
+                "📝 ШАГ 10/17 - ПАСПОРТНЫЕ ДАННЫЕ\n\n" +
                 "Введите серию паспорта:\n" +
                 "(или отправьте '-' чтобы пропустить)", cancellationToken);
         }
@@ -13587,11 +13832,11 @@ namespace TeamManagerBot.Handlers
             }
 
             state.CurrentAction = "db_add_contact_passport_number";
-            state.Step = 15;
+            state.Step = 11;
             _userStates[userId] = state;
 
             await _menuManager.SendTemporaryMessageAsync(chatId,
-                "📝 ШАГ 15/22\n\n" +
+                "📝 ШАГ 11/17\n\n" +
                 "Введите номер паспорта:\n" +
                 "(или отправьте '-' чтобы пропустить)", cancellationToken);
         }
@@ -13604,11 +13849,11 @@ namespace TeamManagerBot.Handlers
             }
 
             state.CurrentAction = "db_add_contact_passport_expiry";
-            state.Step = 16;
+            state.Step = 12;
             _userStates[userId] = state;
 
             await _menuManager.SendTemporaryMessageAsync(chatId,
-                "📝 ШАГ 16/22\n\n" +
+                "📝 ШАГ 12/17\n\n" +
                 "Введите срок действия паспорта (ДД.ММ.ГГГГ):\n" +
                 "(или отправьте '-' чтобы пропустить)", cancellationToken);
         }
@@ -13629,11 +13874,11 @@ namespace TeamManagerBot.Handlers
             }
 
             state.CurrentAction = "db_add_contact_passport_department";
-            state.Step = 17;
+            state.Step = 13;
             _userStates[userId] = state;
 
             await _menuManager.SendTemporaryMessageAsync(chatId,
-                "📝 ШАГ 17/22\n\n" +
+                "📝 ШАГ 13/17\n\n" +
                 "Введите код подразделения:\n" +
                 "(или отправьте '-' чтобы пропустить)", cancellationToken);
         }
@@ -13646,11 +13891,11 @@ namespace TeamManagerBot.Handlers
             }
 
             state.CurrentAction = "db_add_contact_passport_issued_by";
-            state.Step = 18;
+            state.Step = 14;
             _userStates[userId] = state;
 
             await _menuManager.SendTemporaryMessageAsync(chatId,
-                "📝 ШАГ 18/22\n\n" +
+                "📝 ШАГ 14/17\n\n" +
                 "Введите кем выдан паспорт:\n" +
                 "(или отправьте '-' чтобы пропустить)", cancellationToken);
         }
@@ -13663,11 +13908,11 @@ namespace TeamManagerBot.Handlers
             }
 
             state.CurrentAction = "db_add_contact_passport_issue_date";
-            state.Step = 19;
+            state.Step = 15;
             _userStates[userId] = state;
 
             await _menuManager.SendTemporaryMessageAsync(chatId,
-                "📝 ШАГ 19/22\n\n" +
+                "📝 ШАГ 15/17\n\n" +
                 "Введите дату выдачи паспорта (ДД.ММ.ГГГГ):\n" +
                 "(или отправьте '-' чтобы пропустить)", cancellationToken);
         }
@@ -13688,11 +13933,11 @@ namespace TeamManagerBot.Handlers
             }
 
             state.CurrentAction = "db_add_contact_inn";
-            state.Step = 20;
+            state.Step = 16;
             _userStates[userId] = state;
 
             await _menuManager.SendTemporaryMessageAsync(chatId,
-                "📝 ШАГ 20/22\n\n" +
+                "📝 ШАГ 16/17\n\n" +
                 "Введите ИНН:\n" +
                 "(или отправьте '-' чтобы пропустить)", cancellationToken);
         }
@@ -13704,32 +13949,16 @@ namespace TeamManagerBot.Handlers
                 state.Data["inn"] = text;
             }
 
-            state.CurrentAction = "db_add_contact_status";
-            state.Step = 21;
-            _userStates[userId] = state;
-
-            await _menuManager.SendTemporaryMessageAsync(chatId,
-                "📝 ШАГ 21/22\n\n" +
-                "Введите статус карты (рабочая/лок/115/161):\n" +
-                "(или отправьте '-' чтобы пропустить)", cancellationToken);
-        }
-
-        private async Task HandleAddContactStatusAsync(long chatId, long userId, string text, UserState state, CancellationToken cancellationToken)
-        {
-            if (text != "-")
-            {
-                state.Data["cardStatus"] = text;
-            }
-
             state.CurrentAction = "db_add_contact_notes";
-            state.Step = 22;
+            state.Step = 17;
             _userStates[userId] = state;
 
             await _menuManager.SendTemporaryMessageAsync(chatId,
-                "📝 ШАГ 22/22\n\n" +
+                "📝 ШАГ 17/17\n\n" +
                 "Введите заметки (дополнительная информация):\n" +
                 "(или отправьте '-' чтобы пропустить)", cancellationToken);
         }
+
         private async Task StartEditContactNotesAsync(long chatId, long userId, int contactId, CancellationToken cancellationToken)
         {
             Console.WriteLine($"   → StartEditContactNotesAsync вызван для contactId: {contactId}");
@@ -13843,12 +14072,7 @@ namespace TeamManagerBot.Handlers
                 PhoneNumber = state.Data.ContainsKey("phoneNumber") ? state.Data["phoneNumber"]?.ToString() : null,
                 BirthDate = state.Data.ContainsKey("birthDate") ? (DateTime?)state.Data["birthDate"] : null,
 
-                // ... остальные поля ...
-
-                CardNumber = state.Data.ContainsKey("cardNumber") ? state.Data["cardNumber"]?.ToString() : null,
-                CVV = state.Data.ContainsKey("cvv") ? state.Data["cvv"]?.ToString() : null,
-                CardExpiry = state.Data.ContainsKey("cardExpiry") ? state.Data["cardExpiry"]?.ToString() : null,
-                SecurityWord = state.Data.ContainsKey("securityWord") ? state.Data["securityWord"]?.ToString() : null,
+                // Карты добавляются только через меню "💳 КАРТЫ".
 
                 OurPhoneNumber = state.Data.ContainsKey("ourPhoneNumber") ? state.Data["ourPhoneNumber"]?.ToString() : null,
                 BankPassword = state.Data.ContainsKey("bankPassword") ? state.Data["bankPassword"]?.ToString() : null,
@@ -13863,7 +14087,6 @@ namespace TeamManagerBot.Handlers
                 PassportIssueDate = state.Data.ContainsKey("passportIssueDate") ? (DateTime?)state.Data["passportIssueDate"] : null,
                 INN = state.Data.ContainsKey("inn") ? state.Data["inn"]?.ToString() : null,
 
-                CardStatus = state.Data.ContainsKey("cardStatus") ? state.Data["cardStatus"]?.ToString() : null,
                 Notes = state.Data.ContainsKey("notes") ? state.Data["notes"]?.ToString() : null,
 
                 ContactType = "Дроп",
@@ -13989,31 +14212,26 @@ namespace TeamManagerBot.Handlers
             var text = $"✏️ РЕДАКТИРОВАНИЕ КОНТАКТА: {name}\n\n" +
                        "Выберите поле для редактирования:\n\n" +
                        "1️⃣ Telegram username\n" +
-                       "2️⃣ Полное имя\n" +
+                       "2️⃣ ФИО\n" +
                        "3️⃣ Телефон\n" +
                        "4️⃣ Дата рождения\n" +
-                       "5️⃣ Номер карты\n" +
-                       "6️⃣ CVV\n" +
-                       "7️⃣ Срок карты\n" +
-                       "8️⃣ Кодовое слово\n" +
-                       "9️⃣ Наш номер на контакте\n" +
-                       "🔟 Пароль от банка\n" +
-                       "1️⃣1️⃣ Пин-код\n" +
-                       "1️⃣2️⃣ Наша почта\n" +
-                       "1️⃣3️⃣ Паспортные данные\n" +
-                       "1️⃣4️⃣ ИНН\n" +
-                       "1️⃣5️⃣ Статус карты\n" +
-                       "1️⃣6️⃣ Заметки\n\n" +
-                       "Введите номер поля (1-16) или 0 для выхода:";
+                       "5️⃣ Наш номер на контакте\n" +
+                       "6️⃣ Пароль от банка\n" +
+                       "7️⃣ Пин-код\n" +
+                       "8️⃣ Наша почта\n" +
+                       "9️⃣ Паспортные данные\n" +
+                       "🔟 ИНН\n" +
+                       "1️⃣1️⃣ Заметки\n\n" +
+                       "Введите номер поля (1-11) или 0 для выхода:";
 
             await _menuManager.SendTemporaryMessageAsync(chatId, text, cancellationToken);
         }
 
         private async Task HandleEditContactSelectFieldAsync(long chatId, long userId, string text, UserState state, CancellationToken cancellationToken)
         {
-            if (!int.TryParse(text, out int field) || field < 0 || field > 16)
+            if (!int.TryParse(text, out int field) || field < 0 || field > 11)
             {
-                await _menuManager.SendTemporaryMessageAsync(chatId, "❌ Введите число от 0 до 16", cancellationToken);
+                await _menuManager.SendTemporaryMessageAsync(chatId, "❌ Введите число от 0 до 11", cancellationToken);
                 return;
             }
 
@@ -14036,10 +14254,22 @@ namespace TeamManagerBot.Handlers
                 return;
             }
 
+            field = field switch
+            {
+                5 => 9,
+                6 => 10,
+                7 => 11,
+                8 => 12,
+                9 => 13,
+                10 => 14,
+                11 => 16,
+                _ => field
+            };
+
             var fieldName = field switch
             {
                 1 => "Telegram username",
-                2 => "Полное имя",
+                2 => "ФИО",
                 3 => "Телефон",
                 4 => "Дата рождения",
                 5 => "Номер карты",
@@ -14279,17 +14509,8 @@ namespace TeamManagerBot.Handlers
                        $"│ 🎭 Ник: {contact.Nickname ?? "-"}\n" +
                        $"│ 📞 Телефон: {contact.PhoneNumber ?? "-"}\n" +
                        $"│ 🎂 Дата рождения: {contact.BirthDate?.ToString("dd.MM.yyyy") ?? "-"}\n" +
-                       $"│ {statusEmoji} Статус: {contact.CardStatus ?? "-"}\n" +
                        $"│ 🏷️ Теги: {contact.Tags ?? "-"}\n" +
                        $"│ 📝 Тип: {contact.ContactType ?? "-"}\n" +
-                       $"└─────────────────────────────────\n\n" +
-
-                       $"💳 ДАННЫЕ КАРТЫ:\n" +
-                       $"┌─────────────────────────────────\n" +
-                       $"│ Номер: {contact.CardNumber ?? "-"}\n" +
-                       $"│ CVV: {contact.CVV ?? "-"}\n" +
-                       $"│ Срок: {contact.CardExpiry ?? "-"}\n" +
-                       $"│ Код слово: {contact.SecurityWord ?? "-"}\n" +
                        $"└─────────────────────────────────\n\n" +
 
                        $"🔐 НАШИ ДАННЫЕ:\n" +
