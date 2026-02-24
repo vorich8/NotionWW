@@ -1,4 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Text.Json;
@@ -474,6 +474,10 @@ namespace TeamManagerBot.Models
         public string? CardNumber { get; set; }  // Последние 4 цифры или полный номер
         public string? BankName { get; set; }
         public string? CardType { get; set; } // debit, credit
+        public string? CVV { get; set; }
+        public string? CardExpiry { get; set; }
+        public string? SecurityWord { get; set; }
+        public string? CardStatus { get; set; } // рабочая, лок, 115, 161
         public bool IsPrimary { get; set; }
         public string? Notes { get; set; }
     }
@@ -716,7 +720,7 @@ namespace TeamManagerBot.Models
     }
 
     // НОВЫЙ: модель банковской карты
-    
+
 
     // ========== CRYPTO BOT ==========
     public class CryptoCircle
@@ -1188,7 +1192,7 @@ namespace TeamManagerBot.Models
         public DateTime? UpdatedAt { get; set; }
     }
 
-   
+
 
     public class PaginatedResult<T>
     {
